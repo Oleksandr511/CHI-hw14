@@ -14,13 +14,25 @@ model User {
   refreshToken String?
   createdAt    DateTime   @default(now())
   exhibits     Exhibits[]
+  Comment      Comment[]
 }
 
 model Exhibits {
-  id          String   @id @unique @default(uuid())
+  id          String    @id @unique @default(uuid())
   description String
   image       String
-  createdAt   DateTime @default(now())
-  user        User?    @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String?
+  Comment     Comment[]
+}
+
+model Comment {
+  id        String   @id @unique @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  exhibit   Exhibits @relation(fields: [exhibitId], references: [id], onDelete: Cascade)
+  exhibitId String
 }

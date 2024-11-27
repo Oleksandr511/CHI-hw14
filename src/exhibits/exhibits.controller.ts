@@ -20,6 +20,7 @@ import { JwtAuthGuard } from 'src/auth/jwt.auth-guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { FileService } from 'src/file/file.service';
+import { MyGateway } from 'src/gateway/gateway';
 
 @ApiTags('Exhibits')
 @Controller('api/exhibits')
@@ -28,6 +29,7 @@ export class ExhibitsController {
   constructor(
     private readonly exhibitsService: ExhibitsService,
     private readonly fileService: FileService,
+    private readonly myGateway: MyGateway,
   ) {}
 
   @Post()
@@ -56,6 +58,8 @@ export class ExhibitsController {
     );
     createExhibitDto.image = url;
     await this.exhibitsService.create(createExhibitDto, req.user.id);
+    this.myGateway.server.emit('notifications', 'New exhibit created');
+
     return { message: 'Exhibit created' };
   }
 

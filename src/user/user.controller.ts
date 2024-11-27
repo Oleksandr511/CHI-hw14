@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Res,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { RegisterUserDto } from './user-dto/register-user.dto';
 import { Response } from 'express';
@@ -19,5 +28,13 @@ export class UserController {
     if (!getUserDto.id && !getUserDto.name)
       throw new Error('Provide id or name');
     return this.userService.getUser(getUserDto);
+  }
+
+  @Delete()
+  @UseGuards(JwtAuthGuard)
+  async deleteUser(@Request() req) {
+    if (!req.user.id) throw new Error('Provide id or name');
+    await this.userService.deleteUser(req.user.id);
+    return { message: 'User deleted' };
   }
 }
