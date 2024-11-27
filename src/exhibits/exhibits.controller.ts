@@ -8,23 +8,27 @@ import {
   UseGuards,
   UploadedFile,
   ParseFilePipe,
-  MaxFileSizeValidator,
   FileTypeValidator,
   BadRequestException,
   UseInterceptors,
   Request,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
 import { ExhibitsService } from './exhibits.service';
 import { CreateExhibitDto } from './dto/create-exhibit.dto';
 import { JwtAuthGuard } from 'src/auth/jwt.auth-guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { FileService } from 'src/file/file.service';
 
 @ApiTags('Exhibits')
 @Controller('api/exhibits')
 @UseGuards(JwtAuthGuard)
 export class ExhibitsController {
-  constructor(private readonly exhibitsService: ExhibitsService) {}
+  constructor(
+    private readonly exhibitsService: ExhibitsService,
+    private readonly fileService: FileService,
+  ) {}
 
   @Post()
   @ApiConsumes('multipart/form-data')
@@ -34,8 +38,8 @@ export class ExhibitsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          // new MaxFileSizeValidator({ maxSize: 2000 }),
-          new FileTypeValidator({ fileType: 'image/jpeg' }),
+          new MaxFileSizeValidator({ maxSize: 50000 }),
+          new FileTypeValidator({ fileType: /image\/(jpeg|png|jpg)/ }),
         ],
         exceptionFactory: (errors) => {
           console.log(errors);
@@ -46,7 +50,11 @@ export class ExhibitsController {
     file: Express.Multer.File,
     @Request() req,
   ) {
-    createExhibitDto.image = file.buffer.toString('base64');
+    const url = await this.fileService.uploadFile(
+      file.buffer,
+      file.originalname,
+    );
+    createExhibitDto.image = url;
     await this.exhibitsService.create(createExhibitDto, req.user.id);
     return { message: 'Exhibit created' };
   }
